@@ -27,14 +27,13 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void transforming_sequence() {
         Flux<Integer> numbersFlux = numerical_service()
-                //todo change only this line
-                ;
+            .map((num)-> num + 1);
 
         //StepVerifier is used for testing purposes
         //ignore it for now, or explore it independently
         StepVerifier.create(numbersFlux)
-                    .expectNext(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-                    .verifyComplete();
+            .expectNext(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+            .verifyComplete();
     }
 
     /***
@@ -48,12 +47,12 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
         Flux<Integer> numbersFlux = numerical_service_2();
 
         //todo: do your changes here
-        Flux<String> resultSequence = null;
+        Flux<String> resultSequence = numbersFlux.map(num-> (num > 0) ? ">" : (num < 0) ? "<" : "=");
 
         //don't change code below
         StepVerifier.create(resultSequence)
-                    .expectNext(">", "<", "=", ">", ">")
-                    .verifyComplete();
+            .expectNext(">", "<", "=", ">", ">")
+            .verifyComplete();
     }
 
     /**
@@ -65,12 +64,11 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void cast() {
         Flux<String> numbersFlux = object_service()
-                .map(i -> (String) i); //todo: change this line only
-
+            .cast(String.class);
 
         StepVerifier.create(numbersFlux)
-                    .expectNext("1", "2", "3", "4", "5")
-                    .verifyComplete();
+            .expectNext("1", "2", "3", "4", "5")
+            .verifyComplete();
     }
 
     /**
@@ -80,12 +78,12 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void maybe() {
         Mono<String> result = maybe_service()
-                //todo: change this line only
-                ;
+            .cast(String.class)
+            .defaultIfEmpty("no results");
 
         StepVerifier.create(result)
-                    .expectNext("no results")
-                    .verifyComplete();
+            .expectNext("no results")
+            .verifyComplete();
     }
 
     /**
@@ -94,14 +92,12 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
      */
     @Test
     public void sequence_sum() {
-        Mono<Integer> sum = null;
-        numerical_service()
-        //todo: do your changes here
-        ;
+        Mono<Integer> sum = numerical_service()
+            .reduce((a, b) -> a + b);
 
         StepVerifier.create(sum)
-                    .expectNext(55)
-                    .verifyComplete();
+            .expectNext(55)
+            .verifyComplete();
     }
 
     /***
@@ -111,12 +107,11 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void sum_each_successive() {
         Flux<Integer> sumEach = numerical_service()
-                //todo: do your changes here
-                ;
+            .scan((a, b) -> a + b);
 
         StepVerifier.create(sumEach)
-                    .expectNext(1, 3, 6, 10, 15, 21, 28, 36, 45, 55)
-                    .verifyComplete();
+            .expectNext(1, 3, 6, 10, 15, 21, 28, 36, 45, 55)
+            .verifyComplete();
     }
 
     /**
@@ -128,12 +123,11 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
      */
     @Test
     public void sequence_starts_with_zero() {
-        Flux<Integer> result = numerical_service()
-                //todo: change this line only
-                ;
+        //Flux<Integer> result = Mono.just(0).concatWith(numerical_service())
+        Flux<Integer> result = numerical_service().startWith(0);
 
         StepVerifier.create(result)
-                    .expectNext(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-                    .verifyComplete();
+            .expectNext(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+            .verifyComplete();
     }
 }

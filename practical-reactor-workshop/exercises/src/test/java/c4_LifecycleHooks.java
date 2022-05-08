@@ -37,12 +37,11 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doOnSubscribe(s -> hooksTriggered.add("subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5))
-                    .expectNextCount(5)
-                    .verifyComplete();
+            .expectNextCount(5)
+            .verifyComplete();
 
         Assertions.assertEquals(hooksTriggered, List.of("subscribe"));
     }
@@ -56,12 +55,11 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doFirst(()->hooksTriggered.add("before subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5).doOnSubscribe(s -> hooksTriggered.add("subscribe")))
-                    .expectNextCount(5)
-                    .verifyComplete();
+            .expectNextCount(5)
+            .verifyComplete();
 
         Assertions.assertEquals(hooksTriggered, Arrays.asList("before subscribe", "subscribe"));
     }
@@ -75,12 +73,14 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger counter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doOnNext(n -> {
+                System.out.println(n);
+                counter.incrementAndGet();
+            });
 
         StepVerifier.create(temperatureFlux)
-                    .expectNextCount(20)
-                    .verifyComplete();
+            .expectNextCount(20)
+            .verifyComplete();
 
         Assertions.assertEquals(counter.get(), 20);
     }
@@ -94,12 +94,11 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean completed = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doOnComplete(() -> completed.set(true));
 
         StepVerifier.create(temperatureFlux.skip(20))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         Assertions.assertTrue(completed.get());
     }
@@ -113,12 +112,11 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean canceled = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doOnCancel(() -> canceled.set(true));
 
         StepVerifier.create(temperatureFlux.take(0))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         Assertions.assertTrue(canceled.get());
     }
@@ -133,20 +131,19 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doAfterTerminate(()-> hooksTriggeredCounter.incrementAndGet());
 
         StepVerifier.create(temperatureFlux.take(0))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         StepVerifier.create(temperatureFlux.skip(20))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         StepVerifier.create(temperatureFlux.skip(20).concatWith(Flux.error(new RuntimeException("oops"))))
-                    .expectError()
-                    .verify();
+            .expectError()
+            .verify();
 
         Assertions.assertEquals(hooksTriggeredCounter.get(), 2);
     }
@@ -161,21 +158,20 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+            .doFinally(f->hooksTriggeredCounter.incrementAndGet());
 
         StepVerifier.create(temperatureFlux.take(0))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         StepVerifier.create(temperatureFlux.skip(20))
-                    .expectNextCount(0)
-                    .verifyComplete();
+            .expectNextCount(0)
+            .verifyComplete();
 
         StepVerifier.create(temperatureFlux.skip(20)
-                                           .concatWith(Flux.error(new RuntimeException("oops"))))
-                    .expectError()
-                    .verify();
+                .concatWith(Flux.error(new RuntimeException("oops"))))
+            .expectError()
+            .verify();
 
         Assertions.assertEquals(hooksTriggeredCounter.get(), 3);
     }
@@ -188,16 +184,16 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> sideEffects = new CopyOnWriteArrayList<>();
 
         Mono<Boolean> just = Mono.just(true)
-                                 .doFirst(() -> sideEffects.add("three"))
-                                 .doFirst(() -> sideEffects.add("two"))
-                                 .doFirst(() -> sideEffects.add("one"));
+            .doFirst(() -> sideEffects.add("three"))
+            .doFirst(() -> sideEffects.add("two"))
+            .doFirst(() -> sideEffects.add("one"));
 
         List<String> orderOfExecution =
-                Arrays.asList("todo", "todo", "todo"); //todo: change this line only
+            Arrays.asList("one", "two", "three"); //todo: change this line only
 
         StepVerifier.create(just)
-                    .expectNext(true)
-                    .verifyComplete();
+            .expectNext(true)
+            .verifyComplete();
 
         Assertions.assertEquals(sideEffects, orderOfExecution);
     }
@@ -217,12 +213,19 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> signals = new CopyOnWriteArrayList<>();
 
         Flux<Integer> flux = Flux.just(1, 2, 3)
-                //todo: change this line only
-                ;
+            .doOnEach(s -> {
+                if (s.isOnNext()) {
+                    signals.add("ON_NEXT");
+                } else if (s.isOnError()) {
+                    signals.add("ON_ERROR");
+                } else if (s.isOnComplete()) {
+                    signals.add("ON_COMPLETE");
+                }
+            });
 
         StepVerifier.create(flux)
-                    .expectNextCount(3)
-                    .verifyComplete();
+            .expectNextCount(3)
+            .verifyComplete();
 
         Assertions.assertEquals(signals, Arrays.asList("ON_NEXT", "ON_NEXT", "ON_NEXT", "ON_COMPLETE"));
     }
